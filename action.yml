@@ -1,0 +1,96 @@
+name: "install-aws-cli-action"
+description: "Install AWS CLI on a Linux host"
+branding:
+  icon: "download-cloud"
+  color: "orange"
+inputs:
+  version:
+    description: "1=latest version of v1, 2=latest version of v2, #.#.#=specific version"
+    required: false
+    default: "2"
+  verbose:
+    description: "Prints ls commands to see changes in the filesystem"
+    required: false
+    default: "false"
+  lightsailctl:
+    description: "Install lightsailctl plugin"
+    required: false
+    default: "false"
+  arch:
+    description: Allowed values are - amd64, x86, x64, arm, arm64
+    required: false
+    default: amd64
+  bindir:
+    description: Bin directory full path, defaults to /usr/local/bin
+    required: false
+    default: /usr/local/bin
+  installrootdir:
+    description: Install directory full path, defaults to /usr/local
+    required: false
+    default: /usr/local
+  rootdir:
+    description: Root directory full path, defaults to PWD
+    required: false
+    default: "" # PWD
+  workdir:
+    description: Working directory full path, all files are downloaded and extracted in this directory
+    required: false
+    default: "" # PWD/unfor19-awscli
+outputs:
+  version:
+    description: "The AWS CLI version that was installed"
+    value: ${{ steps.set-output.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
+    - id: set-env-vars
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_ARCH: ${{ inputs.arch }}
+        INPUT_VERBOSE: ${{ inputs.verbose }}
+        INPUT_LIGHTSAILCTL: ${{ inputs.lightsailctl }}
+        INPUT_BINDIR: ${{ inputs.bindir }}
+        INPUT_INSTALLROOTDIR: ${{ inputs.installrootdir }}
+        INPUT_ROOTDIR: ${{ inputs.rootdir }}
+        INPUT_WORKDIR: ${{ inputs.workdir }}
+      run: |
+        safe_version=$(printf '%s' "$INPUT_VERSION" | tr -d '\n\r')
+        echo "AWS_CLI_VERSION=$safe_version" >> "$GITHUB_ENV"
+        safe_arch=$(printf '%s' "$INPUT_ARCH" | tr -d '\n\r')
+        echo "AWS_CLI_ARCH=$safe_arch" >> "$GITHUB_ENV"
+        safe_verbose=$(printf '%s' "$INPUT_VERBOSE" | tr -d '\n\r')
+        echo "VERBOSE=$safe_verbose" >> "$GITHUB_ENV"
+        safe_lightsailctl=$(printf '%s' "$INPUT_LIGHTSAILCTL" | tr -d '\n\r')
+        echo "LIGHTSAILCTL=$safe_lightsailctl" >> "$GITHUB_ENV"
+        safe_bindir=$(printf '%s' "$INPUT_BINDIR" | tr -d '\n\r')
+        echo "BINDIR=$safe_bindir" >> "$GITHUB_ENV"
+        safe_installrootdir=$(printf '%s' "$INPUT_INSTALLROOTDIR" | tr -d '\n\r')
+        echo "INSTALLROOTDIR=$safe_installrootdir" >> "$GITHUB_ENV"
+        safe_rootdir=$(printf '%s' "$INPUT_ROOTDIR" | tr -d '\n\r')
+        echo "ROOTDIR=$safe_rootdir" >> "$GITHUB_ENV"
+        safe_workdir=$(printf '%s' "$INPUT_WORKDIR" | tr -d '\n\r')
+        echo "WORKDIR=$safe_workdir" >> "$GITHUB_ENV"
+      shell: bash
+    - id: install-aws-cli
+      run: sudo --preserve-env ${GITHUB_ACTION_PATH}/entrypoint.sh
+      shell: bash
+    - id: set-output
+      run: echo "version=$(aws --version)" >> $GITHUB_OUTPUT
+      shell: bash

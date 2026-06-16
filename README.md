@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| v1 | [`v1`](https://github.com/chainguard-actions/unfor19-install-aws-cli-action/tree/v1) | [`f5b46b7`](https://github.com/unfor19/install-aws-cli-action/commit/f5b46b7f32cf5e7ebd652656c5036bf83dd1e60c) |
 | v1.0.4 | [`v1.0.4`](https://github.com/chainguard-actions/unfor19-install-aws-cli-action/tree/v1.0.4) | [`8a86d81`](https://github.com/unfor19/install-aws-cli-action/commit/8a86d81a0f1393cff1f44c77010cb2707e8a1066) |
 | v1.0.6 | [`v1.0.6`](https://github.com/chainguard-actions/unfor19-install-aws-cli-action/tree/v1.0.6) | [`3c53dab`](https://github.com/unfor19/install-aws-cli-action/commit/3c53dab4dd62b5d9d647f0ce9519285250a3c767) |
 

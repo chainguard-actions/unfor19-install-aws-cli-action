@@ -1,0 +1,38 @@
+name: Test basic usage - install AWS CLI v2
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          version: 2
+      - name: Assert version output contains aws-cli
+        env:
+          ACTUAL: ${{ steps.action.outputs.version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [[ "$ACTUAL" != aws-cli/* ]]; then
+            echo "FAIL: expected version output to start with 'aws-cli/', got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: version output is $ACTUAL"
+      - name: Assert aws command is available
+        run: |
+          if ! command -v aws &>/dev/null; then
+            echo "FAIL: aws command not found"
+            exit 1
+          fi
+          echo "PASS: aws is available at $(which aws)"
+      - name: Assert aws version is v2
+        run: |
+          VERSION=$(aws --version 2>&1)
+          echo "aws --version: $VERSION"
+          if [[ "$VERSION" != aws-cli/2* ]]; then
+            echo "FAIL: expected AWS CLI v2, got: $VERSION"
+            exit 1
+          fi
+          echo "PASS: AWS CLI v2 installed"

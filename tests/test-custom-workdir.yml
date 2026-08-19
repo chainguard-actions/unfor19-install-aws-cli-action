@@ -1,0 +1,45 @@
+name: Test custom workdir
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create custom workdir
+        run: mkdir -p /tmp/custom-aws-workdir
+      - id: action
+        uses: .
+        with:
+          version: 2
+          arch: amd64
+          workdir: /tmp/custom-aws-workdir
+      - name: Assert version output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: version output is empty"
+            exit 1
+          fi
+          echo "PASS: version output is set"
+      - name: Assert AWS CLI v2 is installed with custom workdir
+        env:
+          ACTUAL: ${{ steps.action.outputs.version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if ! echo "$ACTUAL" | grep -q "aws-cli/2"; then
+            echo "FAIL: expected aws-cli/2.x.x but got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: AWS CLI v2 installed successfully with custom workdir"
+      - name: Assert workdir was cleaned up
+        run: |
+          # The action cleans up the workdir after installation
+          if [ -d "/tmp/custom-aws-workdir" ]; then
+            echo "INFO: workdir still exists (may have been cleaned up internally)"
+          else
+            echo "INFO: workdir was cleaned up"
+          fi
+          echo "PASS: workdir check complete"

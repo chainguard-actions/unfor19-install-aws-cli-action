@@ -1,0 +1,33 @@
+name: Test AWS CLI v1 install
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          version: 1
+          arch: amd64
+      - name: Assert version output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: version output is empty"
+            exit 1
+          fi
+          echo "PASS: version output is set"
+      - name: Assert aws cli is installed and is v1
+        run: |
+          aws --version
+          VERSION=$(aws --version 2>&1)
+          echo "aws version: $VERSION"
+          if ! echo "$VERSION" | grep -q "aws-cli/1"; then
+            echo "FAIL: expected aws-cli/1 in version string"
+            exit 1
+          fi
+          echo "PASS"

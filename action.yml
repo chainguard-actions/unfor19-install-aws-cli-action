@@ -62,16 +62,16 @@ runs:
         INPUT_WORKDIR: ${{ inputs.workdir }}
       run: |
         safe_version=$(printf '%s' "$INPUT_VERSION" | tr -d '\n\r')
-        echo "AWS_CLI_VERSION=$safe_version" >> "$GITHUB_ENV"
         safe_arch=$(printf '%s' "$INPUT_ARCH" | tr -d '\n\r')
-        echo "AWS_CLI_ARCH=$safe_arch" >> "$GITHUB_ENV"
         safe_verbose=$(printf '%s' "$INPUT_VERBOSE" | tr -d '\n\r')
-        echo "VERBOSE=$safe_verbose" >> "$GITHUB_ENV"
         safe_lightsailctl=$(printf '%s' "$INPUT_LIGHTSAILCTL" | tr -d '\n\r')
-        echo "LIGHTSAILCTL=$safe_lightsailctl" >> "$GITHUB_ENV"
         safe_rootdir=$(printf '%s' "$INPUT_ROOTDIR" | tr -d '\n\r')
-        echo "ROOTDIR=$safe_rootdir" >> "$GITHUB_ENV"
         safe_workdir=$(printf '%s' "$INPUT_WORKDIR" | tr -d '\n\r')
+        echo "AWS_CLI_VERSION=$safe_version" >> "$GITHUB_ENV"
+        echo "AWS_CLI_ARCH=$safe_arch" >> "$GITHUB_ENV"
+        echo "VERBOSE=$safe_verbose" >> "$GITHUB_ENV"
+        echo "LIGHTSAILCTL=$safe_lightsailctl" >> "$GITHUB_ENV"
+        echo "ROOTDIR=$safe_rootdir" >> "$GITHUB_ENV"
         echo "WORKDIR=$safe_workdir" >> "$GITHUB_ENV"
       shell: bash
     - id: install-aws-cli
@@ -80,5 +80,5 @@ runs:
       run: sudo --preserve-env "$ACTION_PATH/entrypoint.sh"
       shell: bash
     - id: set-output
-      run: echo "version=$(aws --version)" >> $GITHUB_OUTPUT
+      run: echo "version=$(aws --version)" >> "$GITHUB_OUTPUT"
       shell: bash

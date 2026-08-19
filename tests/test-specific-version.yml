@@ -1,0 +1,42 @@
+name: Test install specific AWS CLI v2 version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          version: 2.13.0
+          arch: amd64
+      - name: Assert version output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: version output is empty"
+            exit 1
+          fi
+          echo "PASS: version output is set"
+      - name: Assert specific AWS CLI version is installed
+        env:
+          ACTUAL: ${{ steps.action.outputs.version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if ! echo "$ACTUAL" | grep -q "aws-cli/2.13.0"; then
+            echo "FAIL: expected aws-cli/2.13.0 but got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: specific AWS CLI version 2.13.0 is installed"
+      - name: Assert aws command works
+        run: |
+          VERSION=$(aws --version 2>&1)
+          echo "aws --version: $VERSION"
+          if ! echo "$VERSION" | grep -q "aws-cli/2.13.0"; then
+            echo "FAIL: aws command not working or wrong version"
+            exit 1
+          fi
+          echo "PASS: aws command works with specific version"

@@ -1,4 +1,4 @@
-name: Test basic AWS CLI v2 installation
+name: Test AWS CLI v2 installation with custom directories
 on:
   workflow_dispatch:
 jobs:
@@ -10,6 +10,10 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq unzip curl zip
+      - name: Create custom install directory
+        run: |
+          sudo mkdir -p /tmp/custom-install
+          sudo chmod 777 /tmp/custom-install
       - name: Install self-contained fake wget
         run: |
           # Install the self-contained fake wget at /usr/local/bin/wget
@@ -18,12 +22,13 @@ jobs:
           sudo cp "$GITHUB_WORKSPACE/tests/fixtures/fake-wget-selfcontained.sh" /usr/local/bin/wget
           sudo chmod +x /usr/local/bin/wget
           echo "Installed fake wget at: $(which wget)"
-          echo "Fake wget version check:"
-          /usr/local/bin/wget --version 2>/dev/null || true
       - id: action
         uses: .
         with:
           version: "2"
+          # Use default bindir (/usr/local/bin) so aws is in PATH for entrypoint's test_aws_cli()
+          bindir: "/usr/local/bin"
+          installrootdir: "/tmp/custom-install"
           verbose: "false"
       - name: Assert version output contains aws-cli
         env:
@@ -35,19 +40,19 @@ jobs:
             exit 1
           fi
           echo "PASS: version output contains aws-cli/"
-      - name: Assert aws binary is available
+      - name: Assert aws binary is available in default bindir
         run: |
-          if ! command -v aws &>/dev/null; then
-            echo "FAIL: aws command not found in PATH"
+          if [ ! -f "/usr/local/bin/aws" ] && [ ! -L "/usr/local/bin/aws" ]; then
+            echo "FAIL: aws binary not found in /usr/local/bin"
+            ls -la /usr/local/bin/ | grep aws || true
             exit 1
           fi
-          echo "PASS: aws command found at $(which aws)"
-      - name: Assert aws version is v2
+          echo "PASS: aws binary found in /usr/local/bin"
+      - name: Assert aws-cli installed in custom installrootdir
         run: |
-          VERSION_OUTPUT=$(aws --version 2>&1)
-          echo "aws --version: $VERSION_OUTPUT"
-          if ! echo "$VERSION_OUTPUT" | grep -q "aws-cli/2"; then
-            echo "FAIL: expected aws-cli v2 but got: $VERSION_OUTPUT"
+          if [ ! -d "/tmp/custom-install/aws-cli" ]; then
+            echo "FAIL: aws-cli directory not found in custom installrootdir /tmp/custom-install"
+            ls -la /tmp/custom-install/ || true
             exit 1
           fi
-          echo "PASS: aws-cli v2 is installed"
+          echo "PASS: aws-cli directory found in custom installrootdir /tmp/custom-install"

@@ -1,4 +1,4 @@
-name: Test basic AWS CLI v2 installation
+name: Test specific AWS CLI v2 version installation
 on:
   workflow_dispatch:
 jobs:
@@ -18,23 +18,21 @@ jobs:
           sudo cp "$GITHUB_WORKSPACE/tests/fixtures/fake-wget-selfcontained.sh" /usr/local/bin/wget
           sudo chmod +x /usr/local/bin/wget
           echo "Installed fake wget at: $(which wget)"
-          echo "Fake wget version check:"
-          /usr/local/bin/wget --version 2>/dev/null || true
       - id: action
         uses: .
         with:
-          version: "2"
+          version: "2.13.0"
           verbose: "false"
-      - name: Assert version output contains aws-cli
+      - name: Assert version output contains aws-cli/2.13.0
         env:
           ACTUAL: ${{ steps.action.outputs.version }}
         run: |
           echo "actual: $ACTUAL"
-          if ! echo "$ACTUAL" | grep -q "aws-cli/"; then
-            echo "FAIL: expected output to contain 'aws-cli/' but got: $ACTUAL"
+          if ! echo "$ACTUAL" | grep -q "aws-cli/2.13.0"; then
+            echo "FAIL: expected output to contain 'aws-cli/2.13.0' but got: $ACTUAL"
             exit 1
           fi
-          echo "PASS: version output contains aws-cli/"
+          echo "PASS: version output contains aws-cli/2.13.0"
       - name: Assert aws binary is available
         run: |
           if ! command -v aws &>/dev/null; then
@@ -42,12 +40,3 @@ jobs:
             exit 1
           fi
           echo "PASS: aws command found at $(which aws)"
-      - name: Assert aws version is v2
-        run: |
-          VERSION_OUTPUT=$(aws --version 2>&1)
-          echo "aws --version: $VERSION_OUTPUT"
-          if ! echo "$VERSION_OUTPUT" | grep -q "aws-cli/2"; then
-            echo "FAIL: expected aws-cli v2 but got: $VERSION_OUTPUT"
-            exit 1
-          fi
-          echo "PASS: aws-cli v2 is installed"

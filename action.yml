@@ -40,6 +40,7 @@ outputs:
   version:
     description: "The AWS CLI version that was installed"
     value: ${{ steps.set-output.outputs.version }}
+
 runs:
   using: "composite"
   steps:
@@ -89,8 +90,11 @@ runs:
         echo "WORKDIR=$safe_workdir" >> "$GITHUB_ENV"
       shell: bash
     - id: install-aws-cli
-      run: sudo --preserve-env ${GITHUB_ACTION_PATH}/entrypoint.sh
+      run: sudo --preserve-env "${GITHUB_ACTION_PATH}/entrypoint.sh"
       shell: bash
     - id: set-output
-      run: echo "version=$(aws --version)" >> $GITHUB_OUTPUT
+      run: |
+        raw="$(aws --version)" || true
+        safe_aws_version=$(printf '%s' "$raw" | tr -d '\n\r')
+        echo "version=$safe_aws_version" >> "$GITHUB_OUTPUT"
       shell: bash
